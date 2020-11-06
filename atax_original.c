@@ -14,17 +14,17 @@ int main()
 
 	init_array();
 	
-	clock_gettime(CLOCK_MONTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start);
 
 	for(int i = 0; i < TIMES; i++)
 	{
 		kernel_atax();
 	}
 
-	clock_gettime(CLOCK_MONTONIC, &end);
+	clock_gettime(CLOCK_MONOTONIC, &end);
 
 	diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-	gflops = (double) ARITHMETICSL_OPS / (diff / TIMES);
+	gflops = (double) ARITHMETICAL_OPS / (diff / TIMES);
 	printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
 	printf("elapsed time = %llu mseconds\n", (long long unsigned int) diff/1000000);
 	printf("output = %f \n%f GigaFLOPS achieved\n", out, gflops);
@@ -41,7 +41,7 @@ void init_array ()
       x[i] = i * M_PI;
   for (i = 0; i < N; i++)
     for (j = 0; j < N; j++)
-      A[i][j] = ((DATA_TYPE) i*(j+1)) / N;
+      A[i][j] = (i*(j+1)) / N;
 }
 
 
@@ -77,6 +77,7 @@ void kernel_atax()
 /* compare correct output */
 unsigned short int compare_atax()
 {
+	int i, j;
 
 	for (i = 0; i < N; i++)
 	{
@@ -98,7 +99,7 @@ unsigned short int compare_atax()
 
 	for (int i = 0; i < N; i++)
 	{
-		if (equal(Y[i], test[i]) == 1)
+		if (y[i] == test[i])
 		{
 			return 1;
 		}
