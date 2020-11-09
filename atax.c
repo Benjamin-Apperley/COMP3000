@@ -31,6 +31,7 @@ void init_array (int nx, int ny,
   for (i = 0; i < nx; i++)
     for (j = 0; j < ny; j++)
       A[i][j] = ((DATA_TYPE) i*(j+1)) / nx;
+      printf("Array A: %d",A[i][j]);
 }
 
 

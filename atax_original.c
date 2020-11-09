@@ -37,11 +37,19 @@ void init_array ()
 {
   int i, j;
 
-  for (i = 0; i < N; i++)
-      x[i] = i * M_PI;
+  for (i = 0; i < N; i++){
+      x[i] = (rand()%100)/7; // random values 
+   //printf("\n %f", x[i]);
+}
+
+ 	for (i = 0; i < N; i++)
+	{
+		y[i] = 0;
+	}
+
   for (i = 0; i < N; i++)
     for (j = 0; j < N; j++)
-      A[i][j] = (i*(j+1)) / N;
+      A[i][j] = (rand()%200)/13;
 }
 
 
@@ -51,11 +59,8 @@ void kernel_atax()
 {
   int i, j;
 
-#pragma scop
-  	for (i = 0; i < N; i++)
-	{
-		y[i] = 0;
-	}
+
+ 
     
   	for (i = 0; i < N; i++)
     	{
@@ -69,7 +74,7 @@ void kernel_atax()
 			y[j] = y[j] + A[i][j] * tmp[i];
 		}
     	}
-#pragma endscop
+
 
 }
 
