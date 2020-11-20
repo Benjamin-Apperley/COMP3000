@@ -6,7 +6,7 @@ int main()
 	struct timespec start, end;
 	uint64_t diff;
 	double gflops;
-	float out;
+	int outcome;
 
 	initialization_MVM();
 	
@@ -14,7 +14,7 @@ int main()
 
 	for(int i = 0; i < TIMES; i++)
 	{
-		MVM_default();
+		MVM_AVX();
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
@@ -23,14 +23,14 @@ int main()
 	gflops = (double) ARITHMETICAL_OPS / (diff / TIMES);
 	printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
 	printf("elapsed time = %llu mseconds\n", (long long unsigned int) diff/1000000);
-	printf("output = %f \n%f GigaFLOPS achieved\n", out, gflops);
+	printf("%f GigaFLOPS achieved\n", gflops);
 	
-	outcome = Compare_MVM();
-	
+	outcome = Compare_MVM();	
+
 	if (outcome == 0)
-		printf("\n\n\r ----- %s output is correct -----\n\r", s);
+		printf("\n\n\r -----  output is correct -----\n\r");
 	else
-		printf("\n\n\r -----%s output is INcorrect -----\n\r", s);
+		printf("\n\n\r ----- output is INcorrect -----\n\r");
 
 	return 0;
 
@@ -52,17 +52,38 @@ void initialization_MVM() {
 }
 
 
-unsigned short int MVM_default() {
+unsigned short int MVM_AVX() {
 
-	for (int i = 0; i < M; i++) {
-		for (int j = 0; j < M; j++) {
+	__m256 ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, num0, num1, num2, num3, num4, num5;
+	__m128 xmm1, xmm2;
+	float temp;
+	int i, j;
+
+	for (i = 0; i < M; i++) {
+		num1 = _mm256_setzero_ps();
+
+		for (j = 0; j < M;/*((M / 8) * 8);*/ j += 8) {
+
+			num5 = _mm256_load_ps(X + j);
+			num0 = _mm256_load_ps(&A1[i][j]);
+			num1 = _mm256_fmadd_ps(num0, num5, num1);
+		}
+
+		ymm2 = _mm256_permute2f128_ps(num1, num1, 1);
+		num1 = _mm256_add_ps(num1, ymm2);
+		num1 = _mm256_hadd_ps(num1, num1);
+		num1 = _mm256_hadd_ps(num1, num1);
+		xmm2 = _mm256_extractf128_ps(num1, 0);
+		_mm_store_ss(Y + i, xmm2);
+
+		for (; j < M; j++) { 
 			Y[i] += A1[i][j] * X[j];
 		}
+
 	}
 
 	return 1;
 }
-
 
 
 unsigned short int Compare_MVM() {

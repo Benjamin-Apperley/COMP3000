@@ -21,6 +21,7 @@ static float  X[M], Y[M], test1[M], A1[M][M] __attribute__((aligned(64)));
 void initialization_MVM();
 
 unsigned short int MVM_default();
+unsigned short int MVM_AVX();
 unsigned short int Compare_MVM();
 unsigned short int equal(float const a, float const b);
 
