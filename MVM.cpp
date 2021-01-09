@@ -7,6 +7,7 @@ int main()
 	uint64_t diff;
 	double gflops;
 	float out;
+	int outcome;
 
 	initialization_MVM();
 	
@@ -28,9 +29,9 @@ int main()
 	outcome = Compare_MVM();
 	
 	if (outcome == 0)
-		printf("\n\n\r ----- %s output is correct -----\n\r", s);
+		printf("\n\n\r -----  output is correct -----\n\r");
 	else
-		printf("\n\n\r -----%s output is INcorrect -----\n\r", s);
+		printf("\n\n\r ----- output is INcorrect -----\n\r");
 
 	return 0;
 

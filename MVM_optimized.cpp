@@ -2,7 +2,7 @@
 
 int main()
 {
-	
+
 	struct timespec start, end;
 	uint64_t diff;
 	double gflops;
@@ -14,7 +14,9 @@ int main()
 
 	for(int i = 0; i < TIMES; i++)
 	{
-		MVM_AVX();
+		//MVM_AVX();
+		//MVM_OMP();
+		MVM_SSE();
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
@@ -54,15 +56,20 @@ void initialization_MVM() {
 
 unsigned short int MVM_AVX() {
 
-	__m256 ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, num0, num1, num2, num3, num4, num5;
-	__m128 xmm1, xmm2;
+	
 	float temp;
 	int i, j;
+	
 
-	for (i = 0; i < M; i++) {
+	__m256 ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, num0, num1, num2, num3, num4, num5;
+	__m128 xmm1, xmm2;
+	
+	for (i = 0; i < M; i++) 
+	{
 		num1 = _mm256_setzero_ps();
 
-		for (j = 0; j < M;/*((M / 8) * 8);*/ j += 8) {
+		for (j = 0; j < M;/*((M / 8) * 8);*/ j += 8) 
+		{
 
 			num5 = _mm256_load_ps(X + j);
 			num0 = _mm256_load_ps(&A1[i][j]);
@@ -76,10 +83,47 @@ unsigned short int MVM_AVX() {
 		xmm2 = _mm256_extractf128_ps(num1, 0);
 		_mm_store_ss(Y + i, xmm2);
 
-		for (; j < M; j++) { 
+
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_OMP()
+{
+
+	int i, j;
+	
+	#pragma omp parallel for private(i,j) shared(A1,X) reduction(+:Y)
+	for (i = 0; i < M; i++) 
+	{
+		for (j = 0; j < M; j++) 
+		{
 			Y[i] += A1[i][j] * X[j];
 		}
+	}
 
+	return 1;
+} 
+
+unsigned short int MVM_SSE()
+{
+__m128 num0, num1, num2, num3, num4, num5, num6;
+
+	for (int i = 0; i < M; i++) {
+
+		num3 = _mm_setzero_ps();
+		for (int j = 0; j < M; j += 4) { 
+
+			num0 = _mm_load_ps(&A1[i][j]);
+			num1 = _mm_load_ps(&X[j]);
+			num3 = _mm_fmadd_ps(num0, num1, num3);
+		}
+
+		num4 = _mm_hadd_ps(num3, num3);
+		num4 = _mm_hadd_ps(num4, num4);
+
+		_mm_store_ss(&Y[i], num4);
 	}
 
 	return 1;
