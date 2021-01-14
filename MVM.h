@@ -24,10 +24,15 @@ unsigned short int MVM_default();
 unsigned short int MVM_AVX();
 unsigned short int MVM_OMP();
 unsigned short int MVM_SSE();
+unsigned short int MVM_SIMD();
+unsigned short int MVM_regBlock_2();
+unsigned short int MVM_regBlock_8();
+unsigned short int MVM_regBlock_13();
+unsigned short int MVM_regBlock_16();
 unsigned short int Compare_MVM();
 unsigned short int equal(float const a, float const b);
 
-#define TIMES 400
+#define TIMES 1
 #define BILLION 1000000000L
 #define ARITHMETICAL_OPS M*M*2
 #define EPSILON 0.01

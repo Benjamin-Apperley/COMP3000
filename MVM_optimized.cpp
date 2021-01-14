@@ -16,7 +16,12 @@ int main()
 	{
 		//MVM_AVX();
 		//MVM_OMP();
-		MVM_SSE();
+		//MVM_SSE();
+		//MVM_SIMD();
+		//MVM_regBlock_2();
+		MVM_regBlock_8();
+		//MVM_regBlock_13();
+		//MVM_regBlock_16();
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
@@ -124,6 +129,196 @@ __m128 num0, num1, num2, num3, num4, num5, num6;
 		num4 = _mm_hadd_ps(num4, num4);
 
 		_mm_store_ss(&Y[i], num4);
+	}
+
+	return 1;
+}
+
+
+unsigned short int MVM_SIMD()
+{
+	int i, j;
+	
+	#pragma omp parallel for private(i,j) shared(A1,X) reduction(+:Y)
+	for (i = 0; i < M; i++) 
+	{
+		#pragma omp simd reduction(+:Y) aligned(Y,A1,X:64)
+		for (j = 0; j < M; j++) 
+		{
+			Y[i] += A1[i][j] * X[j];
+		}
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_regBlock_2()
+{
+	double y0, y1, x0; 	
+	
+	for (int i = 0; i < M; i+=2) {
+		y0 = Y[i];
+		y1 = Y[i + 1];
+		for (int j = 0; j < M; j++) {
+			x0 = X[j];
+			y0 += A1[i][j] * x0;
+			y1 += A1[i+1][j] * x0;
+		}
+		Y[i] += y0;
+		Y[i+1] +=y1;
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_regBlock_8()
+{
+	double y0, y1, y2, y3, y4, y5, y6, y7, x0; 	
+	
+	for (int i = 0; i < M; i+=8) {
+		y0 = Y[i];
+		y1 = Y[i + 1];
+		y2 = Y[i + 2];
+		y3 = Y[i + 3];
+		y4 = Y[i + 4];
+		y5 = Y[i + 5];
+		y6 = Y[i + 6];
+		y7 = Y[i + 7];
+		
+		for (int j = 0; j < M; j++) {
+			x0 = X[j];
+			y0 += A1[i][j] * x0;
+			y1 += A1[i+1][j] * x0;
+			y2 += A1[i+2][j] * x0;
+			y3 += A1[i+3][j] * x0;
+			y4 += A1[i+4][j] * x0;
+			y5 += A1[i+5][j] * x0;
+			y6 += A1[i+6][j] * x0;
+			y7 += A1[i+7][j] * x0;
+		}
+		Y[i] += y0;
+		Y[i+1] +=y1;
+		Y[i+2] +=y2;
+		Y[i+3] +=y3;
+		Y[i+4] +=y4;
+		Y[i+5] +=y5;
+		Y[i+6] +=y6;
+		Y[i+7] +=y7;
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_regBlock_13()
+{
+	double y0, y1, y2, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12, x0; 	
+	
+	for (int i = 0; i < M; i+=13) {
+		y0 = Y[i];
+		y1 = Y[i + 1];
+		y2 = Y[i + 2];
+		y3 = Y[i + 3];
+		y4 = Y[i + 4];
+		y5 = Y[i + 5];
+		y6 = Y[i + 6];
+		y7 = Y[i + 7];
+		y8 = Y[i + 8];
+		y9 = Y[i + 9];
+		y10 = Y[i + 10];
+		y11 = Y[i + 11];
+		y12 = Y[i + 12];
+		
+		for (int j = 0; j < M; j++) {
+			x0 = X[j];
+			y0 += A1[i][j] * x0;
+			y1 += A1[i+1][j] * x0;
+			y2 += A1[i+2][j] * x0;
+			y3 += A1[i+3][j] * x0;
+			y4 += A1[i+4][j] * x0;
+			y5 += A1[i+5][j] * x0;
+			y6 += A1[i+6][j] * x0;
+			y7 += A1[i+7][j] * x0;
+			y8 += A1[i+8][j] * x0;
+			y9 += A1[i+9][j] * x0;
+			y10 += A1[i+10][j] * x0;
+			y11 += A1[i+11][j] * x0;
+			y12 += A1[i+12][j] * x0;
+		}
+		Y[i] += y0;
+		Y[i+1] +=y1;
+		Y[i+2] +=y2;
+		Y[i+3] +=y3;
+		Y[i+4] +=y4;
+		Y[i+5] +=y5;
+		Y[i+6] +=y6;
+		Y[i+7] +=y7;
+		Y[i+8] +=y8;
+		Y[i+9] +=y9;
+		Y[i+10] +=y10;
+		Y[i+11] +=y11;
+		Y[i+12] +=y12;
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_regBlock_16()
+{
+	double y0, y1, y2, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12, y13, y14, y15, y16, x0; 	
+	
+	for (int i = 0; i < M; i+=16) {
+		y0 = Y[i];
+		y1 = Y[i + 1];
+		y2 = Y[i + 2];
+		y3 = Y[i + 3];
+		y4 = Y[i + 4];
+		y5 = Y[i + 5];
+		y6 = Y[i + 6];
+		y7 = Y[i + 7];
+		y8 = Y[i + 8];
+		y9 = Y[i + 9];
+		y10 = Y[i + 10];
+		y11 = Y[i + 11];
+		y12 = Y[i + 12];
+		y13 = Y[i + 13];
+		y14 = Y[i + 14];
+		y15 = Y[i + 15];
+		
+		for (int j = 0; j < M; j++) {
+			x0 = X[j];
+			y0 += A1[i][j] * x0;
+			y1 += A1[i+1][j] * x0;
+			y2 += A1[i+2][j] * x0;
+			y3 += A1[i+3][j] * x0;
+			y4 += A1[i+4][j] * x0;
+			y5 += A1[i+5][j] * x0;
+			y6 += A1[i+6][j] * x0;
+			y7 += A1[i+7][j] * x0;
+			y8 += A1[i+8][j] * x0;
+			y9 += A1[i+9][j] * x0;
+			y10 += A1[i+10][j] * x0;
+			y11 += A1[i+11][j] * x0;
+			y12 += A1[i+12][j] * x0;
+			y13 += A1[i+13][j] * x0;
+			y14 += A1[i+14][j] * x0;
+			y15 += A1[i+15][j] * x0;
+		}
+		Y[i] += y0;
+		Y[i+1] +=y1;
+		Y[i+2] +=y2;
+		Y[i+3] +=y3;
+		Y[i+4] +=y4;
+		Y[i+5] +=y5;
+		Y[i+6] +=y6;
+		Y[i+7] +=y7;
+		Y[i+8] +=y8;
+		Y[i+9] +=y9;
+		Y[i+10] +=y10;
+		Y[i+11] +=y11;
+		Y[i+12] +=y12;
+		Y[i+13] +=y13;
+		Y[i+14] +=y14;
+		Y[i+15] +=y15;
 	}
 
 	return 1;
