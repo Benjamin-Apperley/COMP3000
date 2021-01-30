@@ -19,9 +19,10 @@ int main()
 		//MVM_SSE();
 		//MVM_SIMD();
 		//MVM_regBlock_2();
-		MVM_regBlock_8();
+		//MVM_regBlock_8();
 		//MVM_regBlock_13();
 		//MVM_regBlock_16();
+		MVM_Looptiling();
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
@@ -321,6 +322,26 @@ unsigned short int MVM_regBlock_16()
 		Y[i+15] +=y15;
 	}
 
+	return 1;
+}
+
+
+unsigned short int MVM_Looptiling()
+{
+	for(int ii = 0; ii < M; ii += TILE)
+	{
+		for(int jj = 0; jj < M; jj += TILE)
+		{
+			for (int i = ii; i < ii + TILE; i++) 
+			{
+				for (int j = jj; j < jj + TILE; j++) 
+				{
+					Y[i] += A1[i][j] * X[j];
+				}
+			}
+		}
+	}
+	
 	return 1;
 }
 

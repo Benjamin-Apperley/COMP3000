@@ -29,6 +29,7 @@ unsigned short int MVM_regBlock_2();
 unsigned short int MVM_regBlock_8();
 unsigned short int MVM_regBlock_13();
 unsigned short int MVM_regBlock_16();
+unsigned short int MVM_Looptiling();
 unsigned short int Compare_MVM();
 unsigned short int equal(float const a, float const b);
 
@@ -36,3 +37,4 @@ unsigned short int equal(float const a, float const b);
 #define BILLION 1000000000L
 #define ARITHMETICAL_OPS M*M*2
 #define EPSILON 0.01
+#define TILE 8
