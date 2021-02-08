@@ -22,7 +22,8 @@ int main()
 		//MVM_regBlock_8();
 		//MVM_regBlock_13();
 		//MVM_regBlock_16();
-		MVM_Looptiling();
+		//MVM_Looptiling();
+		MVM_AVX_REG_4();
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
@@ -102,7 +103,7 @@ unsigned short int MVM_OMP()
 	
 	#pragma omp parallel for private(i,j) shared(A1,X) reduction(+:Y)
 	for (i = 0; i < M; i++) 
-	{
+	{	
 		for (j = 0; j < M; j++) 
 		{
 			Y[i] += A1[i][j] * X[j];
@@ -344,6 +345,77 @@ unsigned short int MVM_Looptiling()
 	
 	return 1;
 }
+
+unsigned short int MVM_AVX_REG_4()
+{
+	float temp;
+	int i, j;
+	
+
+	__m256  a0, a1, a2, a3, a5, b0, b1, b2, b3, b5, c0, c1, c2, c3, c5, d0, d1, d2, 			d3, d5;
+	__m128 xmm1, a4, b4, c4, d4;
+	
+	for (i = 0; i < M; i+=4) 
+	{
+		a1 = _mm256_setzero_ps();
+		b1 = _mm256_setzero_ps();
+		c1 = _mm256_setzero_ps();
+		d1 = _mm256_setzero_ps();
+
+		for (j = 0; j < M;/*((M / 8) * 8);*/ j += 8) 
+		{
+
+			a5 = _mm256_load_ps(X + j);
+			a0 = _mm256_load_ps(&A1[i][j]);
+			a1 = _mm256_fmadd_ps(a0, a5, a1);
+			
+			b5 = _mm256_load_ps(X + j);
+			b0 = _mm256_load_ps(&A1[i + 1][j]);
+			b1 = _mm256_fmadd_ps(b0, b5, b1);
+			
+			c5 = _mm256_load_ps(X + j);
+			c0 = _mm256_load_ps(&A1[i + 2][j]);
+			c1 = _mm256_fmadd_ps(c0, c5, c1);
+			
+			d5 = _mm256_load_ps(X + j);
+			d0 = _mm256_load_ps(&A1[i + 3][j]);
+			d1 = _mm256_fmadd_ps(d0, d5, d1);
+		}
+
+		a2 = _mm256_permute2f128_ps(a1, a1, 1);
+		a1 = _mm256_add_ps(a1, a2);
+		a1 = _mm256_hadd_ps(a1, a1);
+		a1 = _mm256_hadd_ps(a1, a1);
+		a4 = _mm256_extractf128_ps(a1, 0);
+		_mm_store_ss(Y + i, a4);
+		
+		b2 = _mm256_permute2f128_ps(b1, b1, 1);
+		b1 = _mm256_add_ps(b1, b2);
+		b1 = _mm256_hadd_ps(b1, b1);
+		b1 = _mm256_hadd_ps(b1, b1);
+		b4 = _mm256_extractf128_ps(b1, 0);
+		_mm_store_ss(Y + (i+1), b4);
+		
+		c2 = _mm256_permute2f128_ps(c1, c1, 1);
+		c1 = _mm256_add_ps(c1, c2);
+		c1 = _mm256_hadd_ps(c1, c1);
+		c1 = _mm256_hadd_ps(c1, c1);
+		c4 = _mm256_extractf128_ps(c1, 0);
+		_mm_store_ss(Y + (i+2), c4);
+		
+		d2 = _mm256_permute2f128_ps(d1, d1, 1);
+		d1 = _mm256_add_ps(d1, d2);
+		d1 = _mm256_hadd_ps(d1, d1);
+		d1 = _mm256_hadd_ps(d1, d1);
+		d4 = _mm256_extractf128_ps(d1, 0);
+		_mm_store_ss(Y + (i+3), d4);
+
+
+	}
+
+	return 1;
+}
+
 
 
 unsigned short int Compare_MVM() {
