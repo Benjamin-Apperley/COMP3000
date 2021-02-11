@@ -15,7 +15,7 @@
 #include <time.h>
 
 //MVM initialization 
-#define M 832
+#define M 8320
 static float  X[M] __attribute__((aligned(64))), Y[M] __attribute__((aligned(64))), test1[M] __attribute__((aligned(64))), A1[M][M] __attribute__((aligned(64))); 
 
 void initialization_MVM();
@@ -31,11 +31,15 @@ unsigned short int MVM_regBlock_13();
 unsigned short int MVM_regBlock_16();
 unsigned short int MVM_Looptiling();
 unsigned short int MVM_AVX_REG_4();
+unsigned short int MVM_AVX_REG_8();
+unsigned short int MVM_AVX_REG_13();
+unsigned short int MVM_AVX_REG_OMP();
 unsigned short int Compare_MVM();
 unsigned short int equal(float const a, float const b);
 
-#define TIMES 110000
+#define TIMES 1
 #define BILLION 1000000000L
 #define ARITHMETICAL_OPS M*M*2
-#define EPSILON 0.01
+//#define EPSILON 0.01
+#define EPSILON 0.5
 #define TILE 8
