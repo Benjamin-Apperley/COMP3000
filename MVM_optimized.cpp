@@ -22,12 +22,13 @@ int main()
 		//MVM_regBlock_8();
 		//MVM_regBlock_13();
 		//MVM_regBlock_16();
-		//MVM_Looptiling();
+		MVM_Looptiling();
 		//MVM_AVX_REG_4();
 		//MVM_AVX_REG_8();
 		//MVM_AVX_REG_13();
 		//MVM_AVX_REG_OMP();
-		MVM_AVX_REG_OMP_TILE();
+		//MVM_AVX_REG_OMP_TILE();
+		//MVM_Test();
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
@@ -330,25 +331,38 @@ unsigned short int MVM_regBlock_16()
 	return 1;
 }
 
-
 unsigned short int MVM_Looptiling()
 {
-	for(int ii = 0; ii < M; ii += TILEA)
+	#pragma omp parallel
 	{
-		for(int jj = 0; jj < M; jj += TILEA)
+		float temp[M] = {0} __attribute__((aligned(64)));
+		#pragma omp for collapse(2)
+		for(int ii = 0; ii < M; ii += TILEA)
 		{
-			for (int i = ii; i < ii + TILEA; i++) 
+			for(int jj = 0; jj < M; jj += TILEA)
 			{
-				for (int j = jj; j < jj + TILEA; j++) 
+				for (int i = ii; i < ii + TILEA; i++) 
 				{
-					Y[i] += A1[i][j] * X[j];
+					#pragma vector aligned
+					for (int j = jj; j < jj + TILEA; j++) 
+					{
+						temp[i] += A1[i][j] * X[j];
+					}
 				}
 			}
 		}
+		
+		for(int i = 0; i < M; i++)
+		{
+			#pragma omp atomic
+			Y[i] += temp[i];
+		}
 	}
+	
 	
 	return 1;
 }
+
 
 unsigned short int MVM_AVX_REG_4()
 {
@@ -370,20 +384,21 @@ unsigned short int MVM_AVX_REG_4()
 		{
 
 			a5 = _mm256_load_ps(X + j);
+			
 			a0 = _mm256_load_ps(&A1[i][j]);
 			a1 = _mm256_fmadd_ps(a0, a5, a1);
 			
-			b5 = _mm256_load_ps(X + j);
+			
 			b0 = _mm256_load_ps(&A1[i + 1][j]);
-			b1 = _mm256_fmadd_ps(b0, b5, b1);
+			b1 = _mm256_fmadd_ps(b0, a5, b1);
 			
-			c5 = _mm256_load_ps(X + j);
+			
 			c0 = _mm256_load_ps(&A1[i + 2][j]);
-			c1 = _mm256_fmadd_ps(c0, c5, c1);
+			c1 = _mm256_fmadd_ps(c0, a5, c1);
 			
-			d5 = _mm256_load_ps(X + j);
+			
 			d0 = _mm256_load_ps(&A1[i + 3][j]);
-			d1 = _mm256_fmadd_ps(d0, d5, d1);
+			d1 = _mm256_fmadd_ps(d0, a5, d1);
 		}
 
 		a2 = _mm256_permute2f128_ps(a1, a1, 1);
@@ -445,36 +460,37 @@ unsigned short int MVM_AVX_REG_8()
 		{
 
 			a5 = _mm256_load_ps(X + j);
+			
 			a0 = _mm256_load_ps(&A1[i][j]);
 			a1 = _mm256_fmadd_ps(a0, a5, a1);
 			
-			b5 = _mm256_load_ps(X + j);
+			
 			b0 = _mm256_load_ps(&A1[i + 1][j]);
-			b1 = _mm256_fmadd_ps(b0, b5, b1);
+			b1 = _mm256_fmadd_ps(b0, a5, b1);
 			
-			c5 = _mm256_load_ps(X + j);
+			
 			c0 = _mm256_load_ps(&A1[i + 2][j]);
-			c1 = _mm256_fmadd_ps(c0, c5, c1);
+			c1 = _mm256_fmadd_ps(c0, a5, c1);
 			
-			d5 = _mm256_load_ps(X + j);
+			
 			d0 = _mm256_load_ps(&A1[i + 3][j]);
-			d1 = _mm256_fmadd_ps(d0, d5, d1);
+			d1 = _mm256_fmadd_ps(d0, a5, d1);
 			
-			e5 = _mm256_load_ps(X + j);
+			
 			e0 = _mm256_load_ps(&A1[i + 4][j]);
-			e1 = _mm256_fmadd_ps(e0, e5, e1);
+			e1 = _mm256_fmadd_ps(e0, a5, e1);
 			
-			f5 = _mm256_load_ps(X + j);
+			
 			f0 = _mm256_load_ps(&A1[i + 5][j]);
-			f1 = _mm256_fmadd_ps(f0, f5, f1);
+			f1 = _mm256_fmadd_ps(f0, a5, f1);
 			
-			g5 = _mm256_load_ps(X + j);
+			
 			g0 = _mm256_load_ps(&A1[i + 6][j]);
-			g1 = _mm256_fmadd_ps(g0, g5, g1);
+			g1 = _mm256_fmadd_ps(g0, a5, g1);
 			
-			h5 = _mm256_load_ps(X + j);
+			
 			h0 = _mm256_load_ps(&A1[i + 7][j]);
-			h1 = _mm256_fmadd_ps(h0, h5, h1);
+			h1 = _mm256_fmadd_ps(h0, a5, h1);
 		}
 
 		a2 = _mm256_permute2f128_ps(a1, a1, 1);
@@ -571,56 +587,57 @@ unsigned short int MVM_AVX_REG_13()
 		{
 
 			a5 = _mm256_load_ps(X + j);
+			
 			a0 = _mm256_load_ps(&A1[i][j]);
 			a1 = _mm256_fmadd_ps(a0, a5, a1);
 			
-			b5 = _mm256_load_ps(X + j);
+			
 			b0 = _mm256_load_ps(&A1[i + 1][j]);
-			b1 = _mm256_fmadd_ps(b0, b5, b1);
+			b1 = _mm256_fmadd_ps(b0, a5, b1);
 			
-			c5 = _mm256_load_ps(X + j);
+			
 			c0 = _mm256_load_ps(&A1[i + 2][j]);
-			c1 = _mm256_fmadd_ps(c0, c5, c1);
+			c1 = _mm256_fmadd_ps(c0, a5, c1);
 			
-			d5 = _mm256_load_ps(X + j);
+			
 			d0 = _mm256_load_ps(&A1[i + 3][j]);
-			d1 = _mm256_fmadd_ps(d0, d5, d1);
+			d1 = _mm256_fmadd_ps(d0, a5, d1);
 			
-			e5 = _mm256_load_ps(X + j);
+			
 			e0 = _mm256_load_ps(&A1[i + 4][j]);
-			e1 = _mm256_fmadd_ps(e0, e5, e1);
+			e1 = _mm256_fmadd_ps(e0, a5, e1);
 			
-			f5 = _mm256_load_ps(X + j);
+			
 			f0 = _mm256_load_ps(&A1[i + 5][j]);
-			f1 = _mm256_fmadd_ps(f0, f5, f1);
+			f1 = _mm256_fmadd_ps(f0, a5, f1);
 			
-			g5 = _mm256_load_ps(X + j);
+			
 			g0 = _mm256_load_ps(&A1[i + 6][j]);
-			g1 = _mm256_fmadd_ps(g0, g5, g1);
+			g1 = _mm256_fmadd_ps(g0, a5, g1);
 			
-			h5 = _mm256_load_ps(X + j);
+			
 			h0 = _mm256_load_ps(&A1[i + 7][j]);
-			h1 = _mm256_fmadd_ps(h0, h5, h1);
+			h1 = _mm256_fmadd_ps(h0, a5, h1);
 			
-			i5 = _mm256_load_ps(X + j);
+			
 			i0 = _mm256_load_ps(&A1[i + 8][j]);
-			i1 = _mm256_fmadd_ps(i0, i5, i1);
+			i1 = _mm256_fmadd_ps(i0, a5, i1);
 			
-			j5 = _mm256_load_ps(X + j);
+			
 			j0 = _mm256_load_ps(&A1[i + 9][j]);
-			j1 = _mm256_fmadd_ps(j0, j5, j1);
+			j1 = _mm256_fmadd_ps(j0, a5, j1);
 			
-			k5 = _mm256_load_ps(X + j);
+			
 			k0 = _mm256_load_ps(&A1[i + 10][j]);
-			k1 = _mm256_fmadd_ps(k0, k5, k1);
+			k1 = _mm256_fmadd_ps(k0, a5, k1);
 			
-			l5 = _mm256_load_ps(X + j);
+			
 			l0 = _mm256_load_ps(&A1[i + 11][j]);
-			l1 = _mm256_fmadd_ps(l0, l5, l1);
+			l1 = _mm256_fmadd_ps(l0, a5, l1);
 			
-			m5 = _mm256_load_ps(X + j);
+			
 			m0 = _mm256_load_ps(&A1[i + 12][j]);
-			m1 = _mm256_fmadd_ps(m0, m5, m1);
+			m1 = _mm256_fmadd_ps(m0, a5, m1);
 		}
 
 		a2 = _mm256_permute2f128_ps(a1, a1, 1);
@@ -803,10 +820,10 @@ unsigned short int MVM_AVX_REG_OMP_TILE()
 	
 	#pragma omp parallel
 	{
-	#pragma omp for private(i,j) schedule(dynamic)
+	#pragma omp for private(i,j) schedule(dynamic) collapse(2)
 	for(int ii = 0; ii < M; ii +=TILEA)
 	{
-		for(int jj = 0; jj < M; jj +=TILEA)
+		for(int jj = 0; jj < M; jj +=TILEB)
 		{
 			for (i = ii; i < ii + TILEA; i+=4) 
 			{
@@ -815,7 +832,7 @@ unsigned short int MVM_AVX_REG_OMP_TILE()
 				c1 = _mm256_setzero_ps();
 				d1 = _mm256_setzero_ps();
 				#pragma omp simd aligned(X,A1:64)
-				for (j = jj; j < jj + TILEA;/*((M / 8) * 8);*/ j += 8) 
+				for (j = jj; j < jj + TILEB;/*((M / 8) * 8);*/ j += 8) 
 				{
 
 					a5 = _mm256_load_ps(X + j);
@@ -834,7 +851,7 @@ unsigned short int MVM_AVX_REG_OMP_TILE()
 					d0 = _mm256_load_ps(&A1[i + 3][j]);
 					d1 = _mm256_fmadd_ps(d0, d5, d1);
 				}
-
+				
 				a2 = _mm256_permute2f128_ps(a1, a1, 1);
 				a1 = _mm256_add_ps(a1, a2);
 				a1 = _mm256_hadd_ps(a1, a1);
@@ -872,6 +889,43 @@ unsigned short int MVM_AVX_REG_OMP_TILE()
 	return 1;
 }
 
+unsigned short int MVM_Test()
+{
+	double y0, y1, y2, y3, x0; 	
+	for(int ii = 0; ii < M; ii += TILEA)
+	{
+		for(int jj = 0; jj < M; jj += TILEB)
+		{
+			for (int i = ii; i < ii + TILEA; i+=4) 
+			{
+				y0 = Y[i];
+				y1 = Y[i + 1];
+				y2 = Y[i + 2];
+				y3 = Y[i + 3];
+		
+		
+				for (int j = jj; j < jj + TILEB; j++) 
+				{
+					x0 = X[j];
+					y0 += A1[i][j] * x0;
+					y1 += A1[i+1][j] * x0;
+					y2 += A1[i+2][j] * x0;
+					y3 += A1[i+3][j] * x0;
+					
+				}
+				
+				Y[i] += y0;
+				Y[i+1] +=y1;
+				Y[i+2] +=y2;
+				Y[i+3] +=y3;
+		
+			}
+
+		}
+	}
+	
+	return 1;
+}
 
 unsigned short int Compare_MVM() {
 
