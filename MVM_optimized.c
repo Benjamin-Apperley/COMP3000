@@ -333,18 +333,19 @@ unsigned short int MVM_regBlock_16()
 
 unsigned short int MVM_Looptiling()
 {
-	#pragma omp parallel
+	#pragma omp parallel 
 	{
-		float temp[M] = {0} __attribute__((aligned(64)));
+		float temp[M] __attribute__((aligned(64))) = {0};
 		#pragma omp for collapse(2)
 		for(int ii = 0; ii < M; ii += TILEA)
 		{
-			for(int jj = 0; jj < M; jj += TILEA)
+			for(int jj = 0; jj < M; jj += TILEB)
 			{
-				for (int i = ii; i < ii + TILEA; i++) 
+				
+				for (int i = ii; i < MIN(M, ii + TILEA); i++) 
 				{
 					#pragma vector aligned
-					for (int j = jj; j < jj + TILEA; j++) 
+					for (int j = jj; j < MIN(M, jj + TILEB); j++) 
 					{
 						temp[i] += A1[i][j] * X[j];
 					}
@@ -889,43 +890,7 @@ unsigned short int MVM_AVX_REG_OMP_TILE()
 	return 1;
 }
 
-unsigned short int MVM_Test()
-{
-	double y0, y1, y2, y3, x0; 	
-	for(int ii = 0; ii < M; ii += TILEA)
-	{
-		for(int jj = 0; jj < M; jj += TILEB)
-		{
-			for (int i = ii; i < ii + TILEA; i+=4) 
-			{
-				y0 = Y[i];
-				y1 = Y[i + 1];
-				y2 = Y[i + 2];
-				y3 = Y[i + 3];
-		
-		
-				for (int j = jj; j < jj + TILEB; j++) 
-				{
-					x0 = X[j];
-					y0 += A1[i][j] * x0;
-					y1 += A1[i+1][j] * x0;
-					y2 += A1[i+2][j] * x0;
-					y3 += A1[i+3][j] * x0;
-					
-				}
-				
-				Y[i] += y0;
-				Y[i+1] +=y1;
-				Y[i+2] +=y2;
-				Y[i+3] +=y3;
-		
-			}
 
-		}
-	}
-	
-	return 1;
-}
 
 unsigned short int Compare_MVM() {
 
