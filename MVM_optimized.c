@@ -22,6 +22,7 @@ int main()
 		//MVM_regBlock_8();
 		//MVM_regBlock_13();
 		//MVM_regBlock_16();
+		//MVM_Looptiling_Default();
 		MVM_Looptiling();
 		//MVM_AVX_REG_4();
 		//MVM_AVX_REG_8();
@@ -331,8 +332,31 @@ unsigned short int MVM_regBlock_16()
 	return 1;
 }
 
+unsigned short int MVM_Looptiling_Default()
+{
+	for(int ii = 0; ii < M; ii += TILEA)
+	{
+		for(int jj = 0; jj <M; jj += TILEB)
+		{
+			for(int i = ii; i < MIN(M, ii + TILEA); i++)
+			{
+				for(int j = jj; j < MIN(M, jj + TILEB); j++)
+				{
+					Y[i] += A1[i][j] * X[j];
+				}
+			}
+		}
+	}
+	
+	return 1;
+}
+
 unsigned short int MVM_Looptiling()
 {
+
+	//int i, j, ii, jj;
+	
+	
 	#pragma omp parallel 
 	{
 		float temp[M] __attribute__((aligned(64))) = {0};
@@ -342,10 +366,10 @@ unsigned short int MVM_Looptiling()
 			for(int jj = 0; jj < M; jj += TILEB)
 			{
 				
-				for (int i = ii; i < MIN(M, ii + TILEA); i++) 
+				for(int i = ii; i < MIN(M, ii + TILEA); i++) 
 				{
-					#pragma vector aligned
-					for (int j = jj; j < MIN(M, jj + TILEB); j++) 
+					#pragma omp simd reduction(+:temp) aligned(temp,A1,X:64)
+					for(int j = jj; j < MIN(M, jj + TILEB); j++) 
 					{
 						temp[i] += A1[i][j] * X[j];
 					}
@@ -359,7 +383,6 @@ unsigned short int MVM_Looptiling()
 			Y[i] += temp[i];
 		}
 	}
-	
 	
 	return 1;
 }
