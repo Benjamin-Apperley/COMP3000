@@ -23,12 +23,12 @@ int main()
 		//MVM_regBlock_13();
 		//MVM_regBlock_16();
 		//MVM_Looptiling_Default();
-		MVM_Looptiling();
+		//MVM_Looptiling();
 		//MVM_AVX_REG_4();
 		//MVM_AVX_REG_8();
 		//MVM_AVX_REG_13();
 		//MVM_AVX_REG_OMP();
-		//MVM_AVX_REG_OMP_TILE();
+		MVM_AVX_REG_OMP_TILE();
 		//MVM_Test();
 	}
 
@@ -799,7 +799,7 @@ unsigned short int MVM_AVX_REG_OMP()
 			d0 = _mm256_load_ps(&A1[i + 3][j]);
 			d1 = _mm256_fmadd_ps(d0, d5, d1);
 		}
-
+		
 		a2 = _mm256_permute2f128_ps(a1, a1, 1);
 		a1 = _mm256_add_ps(a1, a2);
 		a1 = _mm256_hadd_ps(a1, a1);
@@ -836,80 +836,90 @@ unsigned short int MVM_AVX_REG_OMP()
 
 unsigned short int MVM_AVX_REG_OMP_TILE()
 {
-	float temp;
-	int i, j;
+
+	float temp[M] __attribute__((aligned(64))) = {0};
+	int i, j, ii, jj;
+	
 	
 	__m256  a0, a1, a2, a5, b0, b1, b2, b5, c0, c1, c2, c5, d0, d1, d2, d5;
 	__m128 xmm1, a4, b4, c4, d4;
-	
-	#pragma omp parallel
+
+	#pragma omp parallel private(i, j, ii, jj)
 	{
-	#pragma omp for private(i,j) schedule(dynamic) collapse(2)
-	for(int ii = 0; ii < M; ii +=TILEA)
-	{
-		for(int jj = 0; jj < M; jj +=TILEB)
+		#pragma omp for collapse(2)
+		for(ii = 0; ii < M; ii += TILEA)
 		{
-			for (i = ii; i < ii + TILEA; i+=4) 
+			for(jj = 0; jj < M; jj += TILEB)
 			{
-				a1 = _mm256_setzero_ps();
-				b1 = _mm256_setzero_ps();
-				c1 = _mm256_setzero_ps();
-				d1 = _mm256_setzero_ps();
-				#pragma omp simd aligned(X,A1:64)
-				for (j = jj; j < jj + TILEB;/*((M / 8) * 8);*/ j += 8) 
-				{
-
-					a5 = _mm256_load_ps(X + j);
-					a0 = _mm256_load_ps(&A1[i][j]);
-					a1 = _mm256_fmadd_ps(a0, a5, a1);
-			
-					b5 = _mm256_load_ps(X + j);
-					b0 = _mm256_load_ps(&A1[i + 1][j]);
-					b1 = _mm256_fmadd_ps(b0, b5, b1);
-			
-					c5 = _mm256_load_ps(X + j);
-					c0 = _mm256_load_ps(&A1[i + 2][j]);
-					c1 = _mm256_fmadd_ps(c0, c5, c1);
-			
-					d5 = _mm256_load_ps(X + j);
-					d0 = _mm256_load_ps(&A1[i + 3][j]);
-					d1 = _mm256_fmadd_ps(d0, d5, d1);
-				}
 				
-				a2 = _mm256_permute2f128_ps(a1, a1, 1);
-				a1 = _mm256_add_ps(a1, a2);
-				a1 = _mm256_hadd_ps(a1, a1);
-				a1 = _mm256_hadd_ps(a1, a1);
-				a4 = _mm256_extractf128_ps(a1, 0);
-				_mm_store_ss(Y + i, a4);
-		
-				b2 = _mm256_permute2f128_ps(b1, b1, 1);
-				b1 = _mm256_add_ps(b1, b2);
-				b1 = _mm256_hadd_ps(b1, b1);
-				b1 = _mm256_hadd_ps(b1, b1);
-				b4 = _mm256_extractf128_ps(b1, 0);
-				_mm_store_ss(Y + (i+1), b4);
-		
-				c2 = _mm256_permute2f128_ps(c1, c1, 1);
-				c1 = _mm256_add_ps(c1, c2);
-				c1 = _mm256_hadd_ps(c1, c1);
-				c1 = _mm256_hadd_ps(c1, c1);
-				c4 = _mm256_extractf128_ps(c1, 0);
-				_mm_store_ss(Y + (i+2), c4);
-		
-				d2 = _mm256_permute2f128_ps(d1, d1, 1);
-				d1 = _mm256_add_ps(d1, d2);
-				d1 = _mm256_hadd_ps(d1, d1);
-				d1 = _mm256_hadd_ps(d1, d1);
-				d4 = _mm256_extractf128_ps(d1, 0);
-				_mm_store_ss(Y + (i+3), d4);
+				for(i = ii; i < MIN(M, ii + TILEA); i+=4) 
+				{
+					a1 = _mm256_setzero_ps();
+					b1 = _mm256_setzero_ps();
+					c1 = _mm256_setzero_ps();
+					d1 = _mm256_setzero_ps();
+					
+					#pragma omp simd aligned(A1,X:64)
+					for(j = jj; j < MIN(M, jj + TILEB); j+=8) 
+					{
+						a5 = _mm256_load_ps(X + j);
+						a0 = _mm256_load_ps(&A1[i][j]);
+						a1 = _mm256_fmadd_ps(a0, a5, a1);
+						
+						b5 = _mm256_load_ps(X + j);
+						b0 = _mm256_load_ps(&A1[i + 1][j]);
+						b1 = _mm256_fmadd_ps(b0, b5, b1);
+						
+						c5 = _mm256_load_ps(X + j);
+						c0 = _mm256_load_ps(&A1[i + 2][j]);
+						c1 = _mm256_fmadd_ps(c0, c5, c1);
+						
+						d5 = _mm256_load_ps(X + j);
+						d0 = _mm256_load_ps(&A1[i + 3][j]);
+						d1 = _mm256_fmadd_ps(d0, d5, d1);
+					}
+					
+					a2 = _mm256_permute2f128_ps(a1, a1, 1);
+					a1 = _mm256_add_ps(a1, a2);
+					a1 = _mm256_hadd_ps(a1, a1);
+					a1 = _mm256_hadd_ps(a1, a1);
+					a4 = _mm256_extractf128_ps(a1, 0);
+					_mm_store_ss(temp + i, a4);
+					
+					b2 = _mm256_permute2f128_ps(b1, b1, 1);
+					b1 = _mm256_add_ps(b1, b2);
+					b1 = _mm256_hadd_ps(b1, b1);
+					b1 = _mm256_hadd_ps(b1, b1);
+					b4 = _mm256_extractf128_ps(b1, 0);
+					_mm_store_ss(temp + (i+1), b4);
+					
+					c2 = _mm256_permute2f128_ps(c1, c1, 1);
+					c1 = _mm256_add_ps(c1, c2);
+					c1 = _mm256_hadd_ps(c1, c1);
+					c1 = _mm256_hadd_ps(c1, c1);
+					c4 = _mm256_extractf128_ps(c1, 0);
+					_mm_store_ss(temp + (i+2), c4);
+					
+					d2 = _mm256_permute2f128_ps(d1, d1, 1);
+					d1 = _mm256_add_ps(d1, d2);
+					d1 = _mm256_hadd_ps(d1, d1);
+					d1 = _mm256_hadd_ps(d1, d1);
+					d4 = _mm256_extractf128_ps(d1, 0);
+					_mm_store_ss(temp + (i+3), d4);
+					
 
-
+				}
 			}
 		}
+		
+		for(int i = 0; i < M; i++)
+		{
+			#pragma omp atomic
+			Y[i] += temp[i];
+		}
+		
 	}
 	
-	}
 	return 1;
 }
 

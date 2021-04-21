@@ -15,7 +15,7 @@
 #include <time.h>
 
 //MVM initialization 
-#define M 16000
+#define M 22528
 #define MIN(X,Y) (((X) < (Y)) ? (X) : (Y))
 static float  X[M] __attribute__((aligned(64))), Y[M] __attribute__((aligned(64))), test1[M] __attribute__((aligned(64))), A1[M][M] __attribute__((aligned(64))); 
 
@@ -45,6 +45,6 @@ unsigned short int equal(float const a, float const b);
 #define ARITHMETICAL_OPS M*M*2
 //#define EPSILON 0.01
 //#define EPSILON 0.5
-#define EPSILON 3
+#define EPSILON 5
 #define TILEA 64
-#define TILEB 100
+#define TILEB 4096
