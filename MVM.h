@@ -15,7 +15,7 @@
 #include <time.h>
 
 //MVM initialization 
-#define M 22528
+#define M 16384
 #define MIN(X,Y) (((X) < (Y)) ? (X) : (Y))
 static float  X[M] __attribute__((aligned(64))), Y[M] __attribute__((aligned(64))), test1[M] __attribute__((aligned(64))), A1[M][M] __attribute__((aligned(64))); 
 
@@ -32,13 +32,18 @@ unsigned short int MVM_regBlock_13();
 unsigned short int MVM_regBlock_16();
 unsigned short int MVM_Looptiling_Default();
 unsigned short int MVM_Looptiling();
+unsigned short int MVM_AVX_TILE();
+unsigned short int MVM_SSE_REG_8();
 unsigned short int MVM_AVX_REG_4();
 unsigned short int MVM_AVX_REG_8();
 unsigned short int MVM_AVX_REG_13();
+unsigned short int MVM_AVX_REG_16();
 unsigned short int MVM_AVX_REG_OMP();
+unsigned short int MVM_AVX_REG_8_OMP(int noThreads);
 unsigned short int MVM_AVX_REG_OMP_TILE();
 unsigned short int Compare_MVM();
 unsigned short int equal(float const a, float const b);
+unsigned short int execute_MVM();
 
 #define TIMES 1
 #define BILLION 1000000000L
