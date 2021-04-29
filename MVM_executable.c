@@ -37,23 +37,27 @@ void execute_MVM(int N, int intTech, int noThread, int bit int cacheSize) {
 		{
 			if(bit == 1)
 			{
-				if(noThread == 1)
+				if(noThread <= 1)
 				{
+					printf("Running SSE with Register Blocking factor 8");
 					MVM_SSE_REG_8();
 				}
 				else
 				{
+					printf("Running SSE with Register Blocking factor 8 and %d 							threads", noThread )
 					MVM_SSE_REG_8_OMP(noThread);
 				}
 			}
 			if(bit == 2)
 			{
-				if(noThread == 1)
+				if(noThread <= 1)
 				{
+					printf("Running SSE with Register Blocking factor 16");
 					MVM_SSE_REG_16();
 				}
 				else
 				{
+					printf("Running SSE with Register Blocking factor 16 and %d 							threads", noThread )
 					MVM_SSE_REG_16_OMP(noThread);
 				}
 			}
@@ -63,23 +67,27 @@ void execute_MVM(int N, int intTech, int noThread, int bit int cacheSize) {
 		{
 			if(bit == 1)
 			{
-				if(noThread == 1)
+				if(noThread <= 1)
 				{
+					printf("Running AVX with Register Blocking factor 8");
 					MVM_AVX_REG_8();
 				}
 				else
 				{
+					printf("Running AVX with Register Blocking factor 8 and %d 							threads", noThread )
 					MVM_AVX_REG_8_OMP(noThread);
 				}
 			}
 			if(bit == 2)
 			{
-				if(noThread == 1)
+				if(noThread <= 1)
 				{
+					printf("Running AVX with Register Blocking factor 16");
 					MVM_AVX_REG_16();
 				}
 				else
 				{
+					printf("Running AVX with Register Blocking factor 16 and %d 							threads", noThread )
 					MVM_AVX_REG_16_OMP(noThread);
 				}
 			}
@@ -87,17 +95,15 @@ void execute_MVM(int N, int intTech, int noThread, int bit int cacheSize) {
 	}
 	else
 	{
-		if(intTech == 1)
+		if(noThread <= 1)
 		{
-			if(noThread == 1)
-			{
-				MVM_AVX_TILE();
-			}
+			printf("Running Loop Tiling");
+			MVM_Looptiling_Default(cacheSize);
 		}
-		
-		if(intTech == 2)
+		else
 		{
-		
+			printf("Running Loop Tiling with %d threads", noThreads);
+			MVM_Looptiling(noThread, cacheSize);
 		}
 	}
 	
