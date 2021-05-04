@@ -29,7 +29,7 @@ int main()
 
 }
 
-void execute_MVM(int N, int intTech, int noThread, int bit int cacheSize) {
+void execute_MVM(int N, int intTech, int noThread, int bit, int cacheSize) {
 	
 	if(N < 16000)
 	{
@@ -445,6 +445,465 @@ unsigned short int MVM_Looptiling()
 	return 1;
 }
 
+unsigned short int MVM_SSE_REG_8()
+{
+	__m128 a0, a1, a3, a4, b0, b3, b4, c0, c3, c4, d0, d3, d4, e0, e3, e4, f0, f3, f4, g0, g3, 			g4, h0, h3, h4;
+
+	for (int i = 0; i < M; i+=8) {
+
+		a3 = _mm_setzero_ps();
+		b3 = _mm_setzero_ps();
+		c3 = _mm_setzero_ps();
+		d3 = _mm_setzero_ps();
+		e3 = _mm_setzero_ps();
+		f3 = _mm_setzero_ps();
+		g3 = _mm_setzero_ps();
+		h3 = _mm_setzero_ps();
+		
+		for (int j = 0; j < M; j += 4) { 
+			a1 = _mm_load_ps(&X[j]);
+			
+			a0 = _mm_load_ps(&A1[i][j]);
+			a3 = _mm_fmadd_ps(a0, a1, a3);
+			
+			b0 = _mm_load_ps(&A1[i+1][j]);
+			b3 = _mm_fmadd_ps(b0, a1, b3);
+			
+			c0 = _mm_load_ps(&A1[i+2][j]);
+			c3 = _mm_fmadd_ps(c0, a1, c3);
+			
+			d0 = _mm_load_ps(&A1[i+3][j]);
+			d3 = _mm_fmadd_ps(d0, a1, d3);
+			
+			e0 = _mm_load_ps(&A1[i+4][j]);
+			e3 = _mm_fmadd_ps(e0, a1, e3);
+			
+			f0 = _mm_load_ps(&A1[i+5][j]);
+			f3 = _mm_fmadd_ps(f0, a1, f3);
+			
+			g0 = _mm_load_ps(&A1[i+6][j]);
+			g3 = _mm_fmadd_ps(g0, a1, g3);
+			
+			h0 = _mm_load_ps(&A1[i+7][j]);
+			h3 = _mm_fmadd_ps(h0, a1, h3);
+		}
+
+		a4 = _mm_hadd_ps(a3, a3);
+		a4 = _mm_hadd_ps(a4, a4);
+		_mm_store_ss(&Y[i], a4);
+		
+		b4 = _mm_hadd_ps(b3, b3);
+		b4 = _mm_hadd_ps(b4, b4);
+		_mm_store_ss(&Y[i+1], b4);
+		
+		c4 = _mm_hadd_ps(c3, c3);
+		c4 = _mm_hadd_ps(c4, c4);
+		_mm_store_ss(&Y[i+2], c4);
+		
+		d4 = _mm_hadd_ps(d3, d3);
+		d4 = _mm_hadd_ps(d4, d4);
+		_mm_store_ss(&Y[i+3], d4);
+		
+		e4 = _mm_hadd_ps(e3, e3);
+		e4 = _mm_hadd_ps(e4, e4);
+		_mm_store_ss(&Y[i+4], e4);
+		
+		f4 = _mm_hadd_ps(f3, f3);
+		f4 = _mm_hadd_ps(f4, f4);
+		_mm_store_ss(&Y[i+5], f4);
+		
+		g4 = _mm_hadd_ps(g3, g3);
+		g4 = _mm_hadd_ps(g4, g4);
+		_mm_store_ss(&Y[i+6], g4);
+		
+		h4 = _mm_hadd_ps(h3, h3);
+		h4 = _mm_hadd_ps(h4, h4);
+		_mm_store_ss(&Y[i+7], h4);
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_SSE_REG_8_OMP(int noThreads)
+{
+	int i, j;
+	
+	__m128 a0, a1, a3, a4, b0, b3, b4, c0, c3, c4, d0, d3, d4, e0, e3, e4, f0, f3, f4, g0, g3, 			g4, h0, h3, h4;
+	
+	omp_set_num_threads(noThreads);
+	#pragma omp parallel
+	{
+	#pragma omp for private(i,j) schedule(dynamic)
+	for (i = 0; i < M; i+=8) {
+
+		a3 = _mm_setzero_ps();
+		b3 = _mm_setzero_ps();
+		c3 = _mm_setzero_ps();
+		d3 = _mm_setzero_ps();
+		e3 = _mm_setzero_ps();
+		f3 = _mm_setzero_ps();
+		g3 = _mm_setzero_ps();
+		h3 = _mm_setzero_ps();
+		
+		#pragma omp simd aligned(X,A1:64)
+		for (j = 0; j < M; j += 4) { 
+			a1 = _mm_load_ps(&X[j]);
+			
+			a0 = _mm_load_ps(&A1[i][j]);
+			a3 = _mm_fmadd_ps(a0, a1, a3);
+			
+			b0 = _mm_load_ps(&A1[i+1][j]);
+			b3 = _mm_fmadd_ps(b0, a1, b3);
+			
+			c0 = _mm_load_ps(&A1[i+2][j]);
+			c3 = _mm_fmadd_ps(c0, a1, c3);
+			
+			d0 = _mm_load_ps(&A1[i+3][j]);
+			d3 = _mm_fmadd_ps(d0, a1, d3);
+			
+			e0 = _mm_load_ps(&A1[i+4][j]);
+			e3 = _mm_fmadd_ps(e0, a1, e3);
+			
+			f0 = _mm_load_ps(&A1[i+5][j]);
+			f3 = _mm_fmadd_ps(f0, a1, f3);
+			
+			g0 = _mm_load_ps(&A1[i+6][j]);
+			g3 = _mm_fmadd_ps(g0, a1, g3);
+			
+			h0 = _mm_load_ps(&A1[i+7][j]);
+			h3 = _mm_fmadd_ps(h0, a1, h3);
+		}
+
+		a4 = _mm_hadd_ps(a3, a3);
+		a4 = _mm_hadd_ps(a4, a4);
+		_mm_store_ss(&Y[i], a4);
+		
+		b4 = _mm_hadd_ps(b3, b3);
+		b4 = _mm_hadd_ps(b4, b4);
+		_mm_store_ss(&Y[i+1], b4);
+		
+		c4 = _mm_hadd_ps(c3, c3);
+		c4 = _mm_hadd_ps(c4, c4);
+		_mm_store_ss(&Y[i+2], c4);
+		
+		d4 = _mm_hadd_ps(d3, d3);
+		d4 = _mm_hadd_ps(d4, d4);
+		_mm_store_ss(&Y[i+3], d4);
+		
+		e4 = _mm_hadd_ps(e3, e3);
+		e4 = _mm_hadd_ps(e4, e4);
+		_mm_store_ss(&Y[i+4], e4);
+		
+		f4 = _mm_hadd_ps(f3, f3);
+		f4 = _mm_hadd_ps(f4, f4);
+		_mm_store_ss(&Y[i+5], f4);
+		
+		g4 = _mm_hadd_ps(g3, g3);
+		g4 = _mm_hadd_ps(g4, g4);
+		_mm_store_ss(&Y[i+6], g4);
+		
+		h4 = _mm_hadd_ps(h3, h3);
+		h4 = _mm_hadd_ps(h4, h4);
+		_mm_store_ss(&Y[i+7], h4);
+	}
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_SSE_REG_16()
+{
+	__m128 a0, a1, a3, a4, b0, b3, b4, c0, c3, c4, d0, d3, d4, e0, e3, e4, f0, f3, f4, g0, g3, 			g4, h0, h3, h4, i0, i3, i4, j0, j3, j4, k0, k3, k4, l0, l3, l4, m0, m3, m4, n0, n3, 		n4, o0, o3, o4, p0, p3, p4;
+
+	for (int i = 0; i < M; i+=16) {
+
+		a3 = _mm_setzero_ps();
+		b3 = _mm_setzero_ps();
+		c3 = _mm_setzero_ps();
+		d3 = _mm_setzero_ps();
+		e3 = _mm_setzero_ps();
+		f3 = _mm_setzero_ps();
+		g3 = _mm_setzero_ps();
+		h3 = _mm_setzero_ps();
+		i3 = _mm_setzero_ps();
+		j3 = _mm_setzero_ps();
+		k3 = _mm_setzero_ps();
+		l3 = _mm_setzero_ps();
+		m3 = _mm_setzero_ps();
+		n3 = _mm_setzero_ps(); 
+		o3 = _mm_setzero_ps(); 
+		p3 = _mm_setzero_ps();
+		
+		for (int j = 0; j < M; j += 4) { 
+			a1 = _mm_load_ps(&X[j]);
+			
+			a0 = _mm_load_ps(&A1[i][j]);
+			a3 = _mm_fmadd_ps(a0, a1, a3);
+			
+			b0 = _mm_load_ps(&A1[i+1][j]);
+			b3 = _mm_fmadd_ps(b0, a1, b3);
+			
+			c0 = _mm_load_ps(&A1[i+2][j]);
+			c3 = _mm_fmadd_ps(c0, a1, c3);
+			
+			d0 = _mm_load_ps(&A1[i+3][j]);
+			d3 = _mm_fmadd_ps(d0, a1, d3);
+			
+			e0 = _mm_load_ps(&A1[i+4][j]);
+			e3 = _mm_fmadd_ps(e0, a1, e3);
+			
+			f0 = _mm_load_ps(&A1[i+5][j]);
+			f3 = _mm_fmadd_ps(f0, a1, f3);
+			
+			g0 = _mm_load_ps(&A1[i+6][j]);
+			g3 = _mm_fmadd_ps(g0, a1, g3);
+			
+			h0 = _mm_load_ps(&A1[i+7][j]);
+			h3 = _mm_fmadd_ps(h0, a1, h3);
+			
+			i0 = _mm_load_ps(&A1[i+8][j]);
+			i3 = _mm_fmadd_ps(i0, a1, i3);
+			
+			j0 = _mm_load_ps(&A1[i+9][j]);
+			j3 = _mm_fmadd_ps(j0, a1, j3);
+			
+			k0 = _mm_load_ps(&A1[i+10][j]);
+			k3 = _mm_fmadd_ps(k0, a1, k3);
+			
+			l0 = _mm_load_ps(&A1[i+11][j]);
+			l3 = _mm_fmadd_ps(l0, a1, l3);
+			
+			m0 = _mm_load_ps(&A1[i+12][j]);
+			m3 = _mm_fmadd_ps(m0, a1, m3);
+			
+			n0 = _mm_load_ps(&A1[i+13][j]);
+			n3 = _mm_fmadd_ps(n0, a1, n3);
+			
+			o0 = _mm_load_ps(&A1[i+14][j]);
+			o3 = _mm_fmadd_ps(o0, a1, o3);
+			
+			p0 = _mm_load_ps(&A1[i+15][j]);
+			p3 = _mm_fmadd_ps(p0, a1, p3);
+		}
+
+		a4 = _mm_hadd_ps(a3, a3);
+		a4 = _mm_hadd_ps(a4, a4);
+		_mm_store_ss(&Y[i], a4);
+		
+		b4 = _mm_hadd_ps(b3, b3);
+		b4 = _mm_hadd_ps(b4, b4);
+		_mm_store_ss(&Y[i+1], b4);
+		
+		c4 = _mm_hadd_ps(c3, c3);
+		c4 = _mm_hadd_ps(c4, c4);
+		_mm_store_ss(&Y[i+2], c4);
+		
+		d4 = _mm_hadd_ps(d3, d3);
+		d4 = _mm_hadd_ps(d4, d4);
+		_mm_store_ss(&Y[i+3], d4);
+		
+		e4 = _mm_hadd_ps(e3, e3);
+		e4 = _mm_hadd_ps(e4, e4);
+		_mm_store_ss(&Y[i+4], e4);
+		
+		f4 = _mm_hadd_ps(f3, f3);
+		f4 = _mm_hadd_ps(f4, f4);
+		_mm_store_ss(&Y[i+5], f4);
+		
+		g4 = _mm_hadd_ps(g3, g3);
+		g4 = _mm_hadd_ps(g4, g4);
+		_mm_store_ss(&Y[i+6], g4);
+		
+		h4 = _mm_hadd_ps(h3, h3);
+		h4 = _mm_hadd_ps(h4, h4);
+		_mm_store_ss(&Y[i+7], h4);
+		
+		i4 = _mm_hadd_ps(i3, i3);
+		i4 = _mm_hadd_ps(i4, i4);
+		_mm_store_ss(&Y[i+8], i4);
+		
+		j4 = _mm_hadd_ps(j3, j3);
+		j4 = _mm_hadd_ps(j4, j4);
+		_mm_store_ss(&Y[i+9], j4);
+		
+		k4 = _mm_hadd_ps(k3, k3);
+		k4 = _mm_hadd_ps(k4, k4);
+		_mm_store_ss(&Y[i+10], k4);
+		
+		l4 = _mm_hadd_ps(l3, l3);
+		l4 = _mm_hadd_ps(l4, l4);
+		_mm_store_ss(&Y[i+11], l4);
+		
+		m4 = _mm_hadd_ps(m3, m3);
+		m4 = _mm_hadd_ps(m4, m4);
+		_mm_store_ss(&Y[i+12], m4);
+		
+		n4 = _mm_hadd_ps(n3, n3);
+		n4 = _mm_hadd_ps(n4, n4);
+		_mm_store_ss(&Y[i+13], n4);
+		
+		o4 = _mm_hadd_ps(o3, o3);
+		o4 = _mm_hadd_ps(o4, o4);
+		_mm_store_ss(&Y[i+14], o4);
+		
+		p4 = _mm_hadd_ps(p3, p3);
+		p4 = _mm_hadd_ps(p4, p4);
+		_mm_store_ss(&Y[i+15], p4);
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_SSE_REG_16_OMP(int noThreads)
+{
+	int i, j;
+	
+	__m128 a0, a1, a3, a4, b0, b3, b4, c0, c3, c4, d0, d3, d4, e0, e3, e4, f0, f3, f4, g0, g3, 			g4, h0, h3, h4, i0, i3, i4, j0, j3, j4, k0, k3, k4, l0, l3, l4, m0, m3, m4, n0, n3, 		n4, o0, o3, o4, p0, p3, p4;
+	
+	omp_set_num_threads(noThreads);
+	#pragma omp parallel
+	{
+	#pragma omp for private(i,j) schedule(dynamic)
+	for (i = 0; i < M; i+=16) {
+
+		a3 = _mm_setzero_ps();
+		b3 = _mm_setzero_ps();
+		c3 = _mm_setzero_ps();
+		d3 = _mm_setzero_ps();
+		e3 = _mm_setzero_ps();
+		f3 = _mm_setzero_ps();
+		g3 = _mm_setzero_ps();
+		h3 = _mm_setzero_ps();
+		i3 = _mm_setzero_ps();
+		j3 = _mm_setzero_ps();
+		k3 = _mm_setzero_ps();
+		l3 = _mm_setzero_ps();
+		m3 = _mm_setzero_ps();
+		n3 = _mm_setzero_ps(); 
+		o3 = _mm_setzero_ps(); 
+		p3 = _mm_setzero_ps();
+		
+		#pragma omp simd aligned(X,A1:64)
+		for (j = 0; j < M; j += 4) { 
+			a1 = _mm_load_ps(&X[j]);
+			
+			a0 = _mm_load_ps(&A1[i][j]);
+			a3 = _mm_fmadd_ps(a0, a1, a3);
+			
+			b0 = _mm_load_ps(&A1[i+1][j]);
+			b3 = _mm_fmadd_ps(b0, a1, b3);
+			
+			c0 = _mm_load_ps(&A1[i+2][j]);
+			c3 = _mm_fmadd_ps(c0, a1, c3);
+			
+			d0 = _mm_load_ps(&A1[i+3][j]);
+			d3 = _mm_fmadd_ps(d0, a1, d3);
+			
+			e0 = _mm_load_ps(&A1[i+4][j]);
+			e3 = _mm_fmadd_ps(e0, a1, e3);
+			
+			f0 = _mm_load_ps(&A1[i+5][j]);
+			f3 = _mm_fmadd_ps(f0, a1, f3);
+			
+			g0 = _mm_load_ps(&A1[i+6][j]);
+			g3 = _mm_fmadd_ps(g0, a1, g3);
+			
+			h0 = _mm_load_ps(&A1[i+7][j]);
+			h3 = _mm_fmadd_ps(h0, a1, h3);
+			
+			i0 = _mm_load_ps(&A1[i+8][j]);
+			i3 = _mm_fmadd_ps(i0, a1, i3);
+			
+			j0 = _mm_load_ps(&A1[i+9][j]);
+			j3 = _mm_fmadd_ps(j0, a1, j3);
+			
+			k0 = _mm_load_ps(&A1[i+10][j]);
+			k3 = _mm_fmadd_ps(k0, a1, k3);
+			
+			l0 = _mm_load_ps(&A1[i+11][j]);
+			l3 = _mm_fmadd_ps(l0, a1, l3);
+			
+			m0 = _mm_load_ps(&A1[i+12][j]);
+			m3 = _mm_fmadd_ps(m0, a1, m3);
+			
+			n0 = _mm_load_ps(&A1[i+13][j]);
+			n3 = _mm_fmadd_ps(n0, a1, n3);
+			
+			o0 = _mm_load_ps(&A1[i+14][j]);
+			o3 = _mm_fmadd_ps(o0, a1, o3);
+			
+			p0 = _mm_load_ps(&A1[i+15][j]);
+			p3 = _mm_fmadd_ps(p0, a1, p3);
+		}
+
+		a4 = _mm_hadd_ps(a3, a3);
+		a4 = _mm_hadd_ps(a4, a4);
+		_mm_store_ss(&Y[i], a4);
+		
+		b4 = _mm_hadd_ps(b3, b3);
+		b4 = _mm_hadd_ps(b4, b4);
+		_mm_store_ss(&Y[i+1], b4);
+		
+		c4 = _mm_hadd_ps(c3, c3);
+		c4 = _mm_hadd_ps(c4, c4);
+		_mm_store_ss(&Y[i+2], c4);
+		
+		d4 = _mm_hadd_ps(d3, d3);
+		d4 = _mm_hadd_ps(d4, d4);
+		_mm_store_ss(&Y[i+3], d4);
+		
+		e4 = _mm_hadd_ps(e3, e3);
+		e4 = _mm_hadd_ps(e4, e4);
+		_mm_store_ss(&Y[i+4], e4);
+		
+		f4 = _mm_hadd_ps(f3, f3);
+		f4 = _mm_hadd_ps(f4, f4);
+		_mm_store_ss(&Y[i+5], f4);
+		
+		g4 = _mm_hadd_ps(g3, g3);
+		g4 = _mm_hadd_ps(g4, g4);
+		_mm_store_ss(&Y[i+6], g4);
+		
+		h4 = _mm_hadd_ps(h3, h3);
+		h4 = _mm_hadd_ps(h4, h4);
+		_mm_store_ss(&Y[i+7], h4);
+		
+		i4 = _mm_hadd_ps(i3, i3);
+		i4 = _mm_hadd_ps(i4, i4);
+		_mm_store_ss(&Y[i+8], i4);
+		
+		j4 = _mm_hadd_ps(j3, j3);
+		j4 = _mm_hadd_ps(j4, j4);
+		_mm_store_ss(&Y[i+9], j4);
+		
+		k4 = _mm_hadd_ps(k3, k3);
+		k4 = _mm_hadd_ps(k4, k4);
+		_mm_store_ss(&Y[i+10], k4);
+		
+		l4 = _mm_hadd_ps(l3, l3);
+		l4 = _mm_hadd_ps(l4, l4);
+		_mm_store_ss(&Y[i+11], l4);
+		
+		m4 = _mm_hadd_ps(m3, m3);
+		m4 = _mm_hadd_ps(m4, m4);
+		_mm_store_ss(&Y[i+12], m4);
+		
+		n4 = _mm_hadd_ps(n3, n3);
+		n4 = _mm_hadd_ps(n4, n4);
+		_mm_store_ss(&Y[i+13], n4);
+		
+		o4 = _mm_hadd_ps(o3, o3);
+		o4 = _mm_hadd_ps(o4, o4);
+		_mm_store_ss(&Y[i+14], o4);
+		
+		p4 = _mm_hadd_ps(p3, p3);
+		p4 = _mm_hadd_ps(p4, p4);
+		_mm_store_ss(&Y[i+15], p4);
+	}
+	}
+	
+	return 1;
+}
 
 unsigned short int MVM_AVX_REG_4()
 {
@@ -637,6 +1096,132 @@ unsigned short int MVM_AVX_REG_8()
 	return 1;
 }
 
+unsigned short int MVM_AVX_REG_8_OMP(int noThreads)
+{
+	float tmp;
+	int i, j;
+	
+
+	__m256  a0, a1, a2, a5, b0, b1, b2, b5, c0, c1, c2, c5, d0, d1, d2, d5,
+		 e0, e1, e2, e5, f0, f1, f2, f5, g0, g1, g2, g5, h0, h1, h2, h5;
+	__m128	a4, b4, c4, d4, e4, f4, g4, h4;
+	
+	omp_set_num_threads(noThreads);
+	#pragma omp parallel
+	{
+	#pragma omp for private(i,j) schedule(dynamic)
+	for (i = 0; i < M; i+=8) 
+	{
+		a1 = _mm256_setzero_ps();
+		b1 = _mm256_setzero_ps();
+		c1 = _mm256_setzero_ps();
+		d1 = _mm256_setzero_ps();
+		e1 = _mm256_setzero_ps();
+		f1 = _mm256_setzero_ps();
+		g1 = _mm256_setzero_ps();
+		h1 = _mm256_setzero_ps();
+		
+		#pragma omp simd aligned(X,A1:64)
+		for (j = 0; j < M;/*((M / 8) * 8);*/ j += 8) 
+		{
+
+			a5 = _mm256_load_ps(X + j);
+			
+			a0 = _mm256_load_ps(&A1[i][j]);
+			a1 = _mm256_fmadd_ps(a0, a5, a1);
+			
+			
+			b0 = _mm256_load_ps(&A1[i + 1][j]);
+			b1 = _mm256_fmadd_ps(b0, a5, b1);
+			
+			
+			c0 = _mm256_load_ps(&A1[i + 2][j]);
+			c1 = _mm256_fmadd_ps(c0, a5, c1);
+			
+			
+			d0 = _mm256_load_ps(&A1[i + 3][j]);
+			d1 = _mm256_fmadd_ps(d0, a5, d1);
+			
+			
+			e0 = _mm256_load_ps(&A1[i + 4][j]);
+			e1 = _mm256_fmadd_ps(e0, a5, e1);
+			
+			
+			f0 = _mm256_load_ps(&A1[i + 5][j]);
+			f1 = _mm256_fmadd_ps(f0, a5, f1);
+			
+			
+			g0 = _mm256_load_ps(&A1[i + 6][j]);
+			g1 = _mm256_fmadd_ps(g0, a5, g1);
+			
+			
+			h0 = _mm256_load_ps(&A1[i + 7][j]);
+			h1 = _mm256_fmadd_ps(h0, a5, h1);
+		}
+
+		a2 = _mm256_permute2f128_ps(a1, a1, 1);
+		a1 = _mm256_add_ps(a1, a2);
+		a1 = _mm256_hadd_ps(a1, a1);
+		a1 = _mm256_hadd_ps(a1, a1);
+		a4 = _mm256_extractf128_ps(a1, 0);
+		_mm_store_ss(Y + i, a4);
+		
+		b2 = _mm256_permute2f128_ps(b1, b1, 1);
+		b1 = _mm256_add_ps(b1, b2);
+		b1 = _mm256_hadd_ps(b1, b1);
+		b1 = _mm256_hadd_ps(b1, b1);
+		b4 = _mm256_extractf128_ps(b1, 0);
+		_mm_store_ss(Y + (i+1), b4);
+		
+		c2 = _mm256_permute2f128_ps(c1, c1, 1);
+		c1 = _mm256_add_ps(c1, c2);
+		c1 = _mm256_hadd_ps(c1, c1);
+		c1 = _mm256_hadd_ps(c1, c1);
+		c4 = _mm256_extractf128_ps(c1, 0);
+		_mm_store_ss(Y + (i+2), c4);
+		
+		d2 = _mm256_permute2f128_ps(d1, d1, 1);
+		d1 = _mm256_add_ps(d1, d2);
+		d1 = _mm256_hadd_ps(d1, d1);
+		d1 = _mm256_hadd_ps(d1, d1);
+		d4 = _mm256_extractf128_ps(d1, 0);
+		_mm_store_ss(Y + (i+3), d4);
+		
+		e2 = _mm256_permute2f128_ps(e1, e1, 1);
+		e1 = _mm256_add_ps(e1, e2);
+		e1 = _mm256_hadd_ps(e1, e1);
+		e1 = _mm256_hadd_ps(e1, e1);
+		e4 = _mm256_extractf128_ps(e1, 0);
+		_mm_store_ss(Y + (i+4), e4);
+		
+		f2 = _mm256_permute2f128_ps(f1, f1, 1);
+		f1 = _mm256_add_ps(f1, f2);
+		f1 = _mm256_hadd_ps(f1, f1);
+		f1 = _mm256_hadd_ps(f1, f1);
+		f4 = _mm256_extractf128_ps(f1, 0);
+		_mm_store_ss(Y + (i+5), f4);
+		
+		g2 = _mm256_permute2f128_ps(g1, g1, 1);
+		g1 = _mm256_add_ps(g1, g2);
+		g1 = _mm256_hadd_ps(g1, g1);
+		g1 = _mm256_hadd_ps(g1, g1);
+		g4 = _mm256_extractf128_ps(g1, 0);
+		_mm_store_ss(Y + (i+6), g4);
+		
+		h2 = _mm256_permute2f128_ps(h1, h1, 1);
+		h1 = _mm256_add_ps(h1, h2);
+		h1 = _mm256_hadd_ps(h1, h1);
+		h1 = _mm256_hadd_ps(h1, h1);
+		h4 = _mm256_extractf128_ps(h1, 0);
+		_mm_store_ss(Y + (i+7), h4);
+
+
+	}
+	}
+
+	return 1;
+}
+
 unsigned short int MVM_AVX_REG_13()
 {
 	float tmp;
@@ -814,6 +1399,442 @@ unsigned short int MVM_AVX_REG_13()
 		_mm_store_ss(Y + (i+12), m4);
 
 
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_AVX_REG_16()
+{
+	float tmp;
+	int i, j;
+	
+
+	__m256  a0, a1, a2, a5, b0, b1, b2, b5, c0, c1, c2, c5, d0, d1, d2, d5,
+		 e0, e1, e2, e5, f0, f1, f2, f5, g0, g1, g2, g5, h0, h1, h2, h5,
+		 i0, i1, i2, i5, j0, j1, j2, j5, k0, k1, k2, k5, l0, l1, l2, l5, 
+		 m0, m1, m2, m5, n0, n1, n2, n5, o0, o1, o2, o5, p0, p1, p2, p5;
+	__m128	a4, b4, c4, d4, e4, f4, g4, h4, i4, j4, k4, l4, m4, n4, o4, p4;
+	
+	for (i = 0; i < M; i+=16) 
+	{
+		a1 = _mm256_setzero_ps();
+		b1 = _mm256_setzero_ps();
+		c1 = _mm256_setzero_ps();
+		d1 = _mm256_setzero_ps();
+		e1 = _mm256_setzero_ps();
+		f1 = _mm256_setzero_ps();
+		g1 = _mm256_setzero_ps();
+		h1 = _mm256_setzero_ps();
+		i1 = _mm256_setzero_ps();
+		j1 = _mm256_setzero_ps();
+		k1 = _mm256_setzero_ps();
+		l1 = _mm256_setzero_ps();
+		m1 = _mm256_setzero_ps();
+		n1 = _mm256_setzero_ps();
+		o1 = _mm256_setzero_ps();
+		p1 = _mm256_setzero_ps();
+
+		for (j = 0; j < M;/*((M / 8) * 8);*/ j += 8) 
+		{
+
+			a5 = _mm256_load_ps(X + j);
+			
+			a0 = _mm256_load_ps(&A1[i][j]);
+			a1 = _mm256_fmadd_ps(a0, a5, a1);
+			
+			
+			b0 = _mm256_load_ps(&A1[i + 1][j]);
+			b1 = _mm256_fmadd_ps(b0, a5, b1);
+			
+			
+			c0 = _mm256_load_ps(&A1[i + 2][j]);
+			c1 = _mm256_fmadd_ps(c0, a5, c1);
+			
+			
+			d0 = _mm256_load_ps(&A1[i + 3][j]);
+			d1 = _mm256_fmadd_ps(d0, a5, d1);
+			
+			
+			e0 = _mm256_load_ps(&A1[i + 4][j]);
+			e1 = _mm256_fmadd_ps(e0, a5, e1);
+			
+			
+			f0 = _mm256_load_ps(&A1[i + 5][j]);
+			f1 = _mm256_fmadd_ps(f0, a5, f1);
+			
+			
+			g0 = _mm256_load_ps(&A1[i + 6][j]);
+			g1 = _mm256_fmadd_ps(g0, a5, g1);
+			
+			
+			h0 = _mm256_load_ps(&A1[i + 7][j]);
+			h1 = _mm256_fmadd_ps(h0, a5, h1);
+			
+			
+			i0 = _mm256_load_ps(&A1[i + 8][j]);
+			i1 = _mm256_fmadd_ps(i0, a5, i1);
+			
+			
+			j0 = _mm256_load_ps(&A1[i + 9][j]);
+			j1 = _mm256_fmadd_ps(j0, a5, j1);
+			
+			
+			k0 = _mm256_load_ps(&A1[i + 10][j]);
+			k1 = _mm256_fmadd_ps(k0, a5, k1);
+			
+			
+			l0 = _mm256_load_ps(&A1[i + 11][j]);
+			l1 = _mm256_fmadd_ps(l0, a5, l1);
+			
+			
+			m0 = _mm256_load_ps(&A1[i + 12][j]);
+			m1 = _mm256_fmadd_ps(m0, a5, m1);
+			
+			n0 = _mm256_load_ps(&A1[i + 13][j]);
+			n1 = _mm256_fmadd_ps(n0, a5, n1);
+			
+			o0 = _mm256_load_ps(&A1[i + 14][j]);
+			o1 = _mm256_fmadd_ps(o0, a5, o1);
+			
+			p0 = _mm256_load_ps(&A1[i + 15][j]);
+			p1 = _mm256_fmadd_ps(p0, a5, p1);
+		}
+
+		a2 = _mm256_permute2f128_ps(a1, a1, 1);
+		a1 = _mm256_add_ps(a1, a2);
+		a1 = _mm256_hadd_ps(a1, a1);
+		a1 = _mm256_hadd_ps(a1, a1);
+		a4 = _mm256_extractf128_ps(a1, 0);
+		_mm_store_ss(Y + i, a4);
+		
+		b2 = _mm256_permute2f128_ps(b1, b1, 1);
+		b1 = _mm256_add_ps(b1, b2);
+		b1 = _mm256_hadd_ps(b1, b1);
+		b1 = _mm256_hadd_ps(b1, b1);
+		b4 = _mm256_extractf128_ps(b1, 0);
+		_mm_store_ss(Y + (i+1), b4);
+		
+		c2 = _mm256_permute2f128_ps(c1, c1, 1);
+		c1 = _mm256_add_ps(c1, c2);
+		c1 = _mm256_hadd_ps(c1, c1);
+		c1 = _mm256_hadd_ps(c1, c1);
+		c4 = _mm256_extractf128_ps(c1, 0);
+		_mm_store_ss(Y + (i+2), c4);
+		
+		d2 = _mm256_permute2f128_ps(d1, d1, 1);
+		d1 = _mm256_add_ps(d1, d2);
+		d1 = _mm256_hadd_ps(d1, d1);
+		d1 = _mm256_hadd_ps(d1, d1);
+		d4 = _mm256_extractf128_ps(d1, 0);
+		_mm_store_ss(Y + (i+3), d4);
+		
+		e2 = _mm256_permute2f128_ps(e1, e1, 1);
+		e1 = _mm256_add_ps(e1, e2);
+		e1 = _mm256_hadd_ps(e1, e1);
+		e1 = _mm256_hadd_ps(e1, e1);
+		e4 = _mm256_extractf128_ps(e1, 0);
+		_mm_store_ss(Y + (i+4), e4);
+		
+		f2 = _mm256_permute2f128_ps(f1, f1, 1);
+		f1 = _mm256_add_ps(f1, f2);
+		f1 = _mm256_hadd_ps(f1, f1);
+		f1 = _mm256_hadd_ps(f1, f1);
+		f4 = _mm256_extractf128_ps(f1, 0);
+		_mm_store_ss(Y + (i+5), f4);
+		
+		g2 = _mm256_permute2f128_ps(g1, g1, 1);
+		g1 = _mm256_add_ps(g1, g2);
+		g1 = _mm256_hadd_ps(g1, g1);
+		g1 = _mm256_hadd_ps(g1, g1);
+		g4 = _mm256_extractf128_ps(g1, 0);
+		_mm_store_ss(Y + (i+6), g4);
+		
+		h2 = _mm256_permute2f128_ps(h1, h1, 1);
+		h1 = _mm256_add_ps(h1, h2);
+		h1 = _mm256_hadd_ps(h1, h1);
+		h1 = _mm256_hadd_ps(h1, h1);
+		h4 = _mm256_extractf128_ps(h1, 0);
+		_mm_store_ss(Y + (i+7), h4);
+		
+		i2 = _mm256_permute2f128_ps(i1, i1, 1);
+		i1 = _mm256_add_ps(i1, i2);
+		i1 = _mm256_hadd_ps(i1, i1);
+		i1 = _mm256_hadd_ps(i1, i1);
+		i4 = _mm256_extractf128_ps(i1, 0);
+		_mm_store_ss(Y + (i+8), i4);
+		
+		j2 = _mm256_permute2f128_ps(j1, j1, 1);
+		j1 = _mm256_add_ps(j1, j2);
+		j1 = _mm256_hadd_ps(j1, j1);
+		j1 = _mm256_hadd_ps(j1, j1);
+		j4 = _mm256_extractf128_ps(j1, 0);
+		_mm_store_ss(Y + (i+9), j4);
+		
+		k2 = _mm256_permute2f128_ps(k1, k1, 1);
+		k1 = _mm256_add_ps(k1, k2);
+		k1 = _mm256_hadd_ps(k1, k1);
+		k1 = _mm256_hadd_ps(k1, k1);
+		k4 = _mm256_extractf128_ps(k1, 0);
+		_mm_store_ss(Y + (i+10), k4);
+		
+		l2 = _mm256_permute2f128_ps(l1, l1, 1);
+		l1 = _mm256_add_ps(l1, l2);
+		l1 = _mm256_hadd_ps(l1, l1);
+		l1 = _mm256_hadd_ps(l1, l1);
+		l4 = _mm256_extractf128_ps(l1, 0);
+		_mm_store_ss(Y + (i+11), l4);
+		
+		m2 = _mm256_permute2f128_ps(m1, m1, 1);
+		m1 = _mm256_add_ps(m1, m2);
+		m1 = _mm256_hadd_ps(m1, m1);
+		m1 = _mm256_hadd_ps(m1, m1);
+		m4 = _mm256_extractf128_ps(m1, 0);
+		_mm_store_ss(Y + (i+12), m4);
+		
+		n2 = _mm256_permute2f128_ps(n1, n1, 1);
+		n1 = _mm256_add_ps(n1, n2);
+		n1 = _mm256_hadd_ps(n1, n1);
+		n1 = _mm256_hadd_ps(n1, n1);
+		n4 = _mm256_extractf128_ps(n1, 0);
+		_mm_store_ss(Y + (i+13), n4);
+		
+		o2 = _mm256_permute2f128_ps(o1, o1, 1);
+		o1 = _mm256_add_ps(o1, o2);
+		o1 = _mm256_hadd_ps(o1, o1);
+		o1 = _mm256_hadd_ps(o1, o1);
+		o4 = _mm256_extractf128_ps(o1, 0);
+		_mm_store_ss(Y + (i+14), o4);
+		
+		p2 = _mm256_permute2f128_ps(p1, p1, 1);
+		p1 = _mm256_add_ps(p1, p2);
+		p1 = _mm256_hadd_ps(p1, p1);
+		p1 = _mm256_hadd_ps(p1, p1);
+		p4 = _mm256_extractf128_ps(p1, 0);
+		_mm_store_ss(Y + (i+15), p4);
+
+
+	}
+
+	return 1;
+}
+
+unsigned short int MVM_AVX_REG_16_OMP(int noThreads)
+{
+	float tmp;
+	int i, j;
+	
+
+	__m256  a0, a1, a2, a5, b0, b1, b2, b5, c0, c1, c2, c5, d0, d1, d2, d5,
+		 e0, e1, e2, e5, f0, f1, f2, f5, g0, g1, g2, g5, h0, h1, h2, h5,
+		 i0, i1, i2, i5, j0, j1, j2, j5, k0, k1, k2, k5, l0, l1, l2, l5, 
+		 m0, m1, m2, m5, n0, n1, n2, n5, o0, o1, o2, o5, p0, p1, p2, p5;
+	__m128	a4, b4, c4, d4, e4, f4, g4, h4, i4, j4, k4, l4, m4, n4, o4, p4;
+	
+	omp_set_num_threads(noThreads);
+	#pragma omp parallel
+	{
+	#pragma omp for private(i,j) schedule(dynamic)
+	for (i = 0; i < M; i+=16) 
+	{
+		a1 = _mm256_setzero_ps();
+		b1 = _mm256_setzero_ps();
+		c1 = _mm256_setzero_ps();
+		d1 = _mm256_setzero_ps();
+		e1 = _mm256_setzero_ps();
+		f1 = _mm256_setzero_ps();
+		g1 = _mm256_setzero_ps();
+		h1 = _mm256_setzero_ps();
+		i1 = _mm256_setzero_ps();
+		j1 = _mm256_setzero_ps();
+		k1 = _mm256_setzero_ps();
+		l1 = _mm256_setzero_ps();
+		m1 = _mm256_setzero_ps();
+		n1 = _mm256_setzero_ps();
+		o1 = _mm256_setzero_ps();
+		p1 = _mm256_setzero_ps();
+		
+		#pragma omp simd aligned(X,A1:64)
+		for (j = 0; j < M;/*((M / 8) * 8);*/ j += 8) 
+		{
+
+			a5 = _mm256_load_ps(X + j);
+			
+			a0 = _mm256_load_ps(&A1[i][j]);
+			a1 = _mm256_fmadd_ps(a0, a5, a1);
+			
+			
+			b0 = _mm256_load_ps(&A1[i + 1][j]);
+			b1 = _mm256_fmadd_ps(b0, a5, b1);
+			
+			
+			c0 = _mm256_load_ps(&A1[i + 2][j]);
+			c1 = _mm256_fmadd_ps(c0, a5, c1);
+			
+			
+			d0 = _mm256_load_ps(&A1[i + 3][j]);
+			d1 = _mm256_fmadd_ps(d0, a5, d1);
+			
+			
+			e0 = _mm256_load_ps(&A1[i + 4][j]);
+			e1 = _mm256_fmadd_ps(e0, a5, e1);
+			
+			
+			f0 = _mm256_load_ps(&A1[i + 5][j]);
+			f1 = _mm256_fmadd_ps(f0, a5, f1);
+			
+			
+			g0 = _mm256_load_ps(&A1[i + 6][j]);
+			g1 = _mm256_fmadd_ps(g0, a5, g1);
+			
+			
+			h0 = _mm256_load_ps(&A1[i + 7][j]);
+			h1 = _mm256_fmadd_ps(h0, a5, h1);
+			
+			
+			i0 = _mm256_load_ps(&A1[i + 8][j]);
+			i1 = _mm256_fmadd_ps(i0, a5, i1);
+			
+			
+			j0 = _mm256_load_ps(&A1[i + 9][j]);
+			j1 = _mm256_fmadd_ps(j0, a5, j1);
+			
+			
+			k0 = _mm256_load_ps(&A1[i + 10][j]);
+			k1 = _mm256_fmadd_ps(k0, a5, k1);
+			
+			
+			l0 = _mm256_load_ps(&A1[i + 11][j]);
+			l1 = _mm256_fmadd_ps(l0, a5, l1);
+			
+			
+			m0 = _mm256_load_ps(&A1[i + 12][j]);
+			m1 = _mm256_fmadd_ps(m0, a5, m1);
+			
+			n0 = _mm256_load_ps(&A1[i + 13][j]);
+			n1 = _mm256_fmadd_ps(n0, a5, n1);
+			
+			o0 = _mm256_load_ps(&A1[i + 14][j]);
+			o1 = _mm256_fmadd_ps(o0, a5, o1);
+			
+			p0 = _mm256_load_ps(&A1[i + 15][j]);
+			p1 = _mm256_fmadd_ps(p0, a5, p1);
+		}
+
+		a2 = _mm256_permute2f128_ps(a1, a1, 1);
+		a1 = _mm256_add_ps(a1, a2);
+		a1 = _mm256_hadd_ps(a1, a1);
+		a1 = _mm256_hadd_ps(a1, a1);
+		a4 = _mm256_extractf128_ps(a1, 0);
+		_mm_store_ss(Y + i, a4);
+		
+		b2 = _mm256_permute2f128_ps(b1, b1, 1);
+		b1 = _mm256_add_ps(b1, b2);
+		b1 = _mm256_hadd_ps(b1, b1);
+		b1 = _mm256_hadd_ps(b1, b1);
+		b4 = _mm256_extractf128_ps(b1, 0);
+		_mm_store_ss(Y + (i+1), b4);
+		
+		c2 = _mm256_permute2f128_ps(c1, c1, 1);
+		c1 = _mm256_add_ps(c1, c2);
+		c1 = _mm256_hadd_ps(c1, c1);
+		c1 = _mm256_hadd_ps(c1, c1);
+		c4 = _mm256_extractf128_ps(c1, 0);
+		_mm_store_ss(Y + (i+2), c4);
+		
+		d2 = _mm256_permute2f128_ps(d1, d1, 1);
+		d1 = _mm256_add_ps(d1, d2);
+		d1 = _mm256_hadd_ps(d1, d1);
+		d1 = _mm256_hadd_ps(d1, d1);
+		d4 = _mm256_extractf128_ps(d1, 0);
+		_mm_store_ss(Y + (i+3), d4);
+		
+		e2 = _mm256_permute2f128_ps(e1, e1, 1);
+		e1 = _mm256_add_ps(e1, e2);
+		e1 = _mm256_hadd_ps(e1, e1);
+		e1 = _mm256_hadd_ps(e1, e1);
+		e4 = _mm256_extractf128_ps(e1, 0);
+		_mm_store_ss(Y + (i+4), e4);
+		
+		f2 = _mm256_permute2f128_ps(f1, f1, 1);
+		f1 = _mm256_add_ps(f1, f2);
+		f1 = _mm256_hadd_ps(f1, f1);
+		f1 = _mm256_hadd_ps(f1, f1);
+		f4 = _mm256_extractf128_ps(f1, 0);
+		_mm_store_ss(Y + (i+5), f4);
+		
+		g2 = _mm256_permute2f128_ps(g1, g1, 1);
+		g1 = _mm256_add_ps(g1, g2);
+		g1 = _mm256_hadd_ps(g1, g1);
+		g1 = _mm256_hadd_ps(g1, g1);
+		g4 = _mm256_extractf128_ps(g1, 0);
+		_mm_store_ss(Y + (i+6), g4);
+		
+		h2 = _mm256_permute2f128_ps(h1, h1, 1);
+		h1 = _mm256_add_ps(h1, h2);
+		h1 = _mm256_hadd_ps(h1, h1);
+		h1 = _mm256_hadd_ps(h1, h1);
+		h4 = _mm256_extractf128_ps(h1, 0);
+		_mm_store_ss(Y + (i+7), h4);
+		
+		i2 = _mm256_permute2f128_ps(i1, i1, 1);
+		i1 = _mm256_add_ps(i1, i2);
+		i1 = _mm256_hadd_ps(i1, i1);
+		i1 = _mm256_hadd_ps(i1, i1);
+		i4 = _mm256_extractf128_ps(i1, 0);
+		_mm_store_ss(Y + (i+8), i4);
+		
+		j2 = _mm256_permute2f128_ps(j1, j1, 1);
+		j1 = _mm256_add_ps(j1, j2);
+		j1 = _mm256_hadd_ps(j1, j1);
+		j1 = _mm256_hadd_ps(j1, j1);
+		j4 = _mm256_extractf128_ps(j1, 0);
+		_mm_store_ss(Y + (i+9), j4);
+		
+		k2 = _mm256_permute2f128_ps(k1, k1, 1);
+		k1 = _mm256_add_ps(k1, k2);
+		k1 = _mm256_hadd_ps(k1, k1);
+		k1 = _mm256_hadd_ps(k1, k1);
+		k4 = _mm256_extractf128_ps(k1, 0);
+		_mm_store_ss(Y + (i+10), k4);
+		
+		l2 = _mm256_permute2f128_ps(l1, l1, 1);
+		l1 = _mm256_add_ps(l1, l2);
+		l1 = _mm256_hadd_ps(l1, l1);
+		l1 = _mm256_hadd_ps(l1, l1);
+		l4 = _mm256_extractf128_ps(l1, 0);
+		_mm_store_ss(Y + (i+11), l4);
+		
+		m2 = _mm256_permute2f128_ps(m1, m1, 1);
+		m1 = _mm256_add_ps(m1, m2);
+		m1 = _mm256_hadd_ps(m1, m1);
+		m1 = _mm256_hadd_ps(m1, m1);
+		m4 = _mm256_extractf128_ps(m1, 0);
+		_mm_store_ss(Y + (i+12), m4);
+		
+		n2 = _mm256_permute2f128_ps(n1, n1, 1);
+		n1 = _mm256_add_ps(n1, n2);
+		n1 = _mm256_hadd_ps(n1, n1);
+		n1 = _mm256_hadd_ps(n1, n1);
+		n4 = _mm256_extractf128_ps(n1, 0);
+		_mm_store_ss(Y + (i+13), n4);
+		
+		o2 = _mm256_permute2f128_ps(o1, o1, 1);
+		o1 = _mm256_add_ps(o1, o2);
+		o1 = _mm256_hadd_ps(o1, o1);
+		o1 = _mm256_hadd_ps(o1, o1);
+		o4 = _mm256_extractf128_ps(o1, 0);
+		_mm_store_ss(Y + (i+14), o4);
+		
+		p2 = _mm256_permute2f128_ps(p1, p1, 1);
+		p1 = _mm256_add_ps(p1, p2);
+		p1 = _mm256_hadd_ps(p1, p1);
+		p1 = _mm256_hadd_ps(p1, p1);
+		p4 = _mm256_extractf128_ps(p1, 0);
+		_mm_store_ss(Y + (i+15), p4);
+
+
+	}
 	}
 
 	return 1;
